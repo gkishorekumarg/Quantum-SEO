@@ -60,10 +60,8 @@ async function withModelFallback<T>(
     }
 }
 
-// Added responseSchema for better JSON extraction reliability
 export async function generateTopicIdeas(theme: string): Promise<TopicIdea[]> {
     return withRetry(async () => {
-        // Always instantiate a fresh client as per guidelines for reliable API key usage
         const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
         const response = await ai.models.generateContent({
             model: 'gemini-3-flash-preview',
@@ -88,9 +86,6 @@ export async function generateTopicIdeas(theme: string): Promise<TopicIdea[]> {
     });
 }
 
-/**
- * Generate topics using real-world context from a website scrape (Firecrawl)
- */
 export async function generateTopicIdeasFromScrape(scrapedData: { content: string, title: string, description: string }, websiteUrl: string, language: string): Promise<TopicIdea[]> {
     return withRetry(async () => {
         const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
@@ -126,7 +121,6 @@ export async function generateTopicIdeasFromScrape(scrapedData: { content: strin
     });
 }
 
-// Added responseSchema for better JSON extraction reliability
 export async function generateTopicIdeasForWebsite(websiteUrl: string, country: string, language: string): Promise<TopicIdea[]> {
     return withRetry(async () => {
         const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
@@ -153,7 +147,6 @@ export async function generateTopicIdeasForWebsite(websiteUrl: string, country: 
     });
 }
 
-// Updated to use responseSchema for structured JSON output
 export async function analyzeCompetitors(topic: string): Promise<{ competitors: Omit<CompetitorInfo, 'url'>[], groundingLinks: CompetitorInfo[] }> {
     return withRetry(async () => {
         const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
@@ -184,13 +177,11 @@ export async function analyzeCompetitors(topic: string): Promise<{ competitors: 
         });
 
         const parsedData = JSON.parse(extractJson(response.text || "{}"));
-        
         const competitors = (parsedData.competitors || []).map((c: any) => ({
             title: String(c.title || 'Competitor Analysis'),
             summary: typeof c.summary === 'string' ? c.summary : JSON.stringify(c.summary)
         }));
         
-        // Guidelines: Extract website URLs from groundingChunks
         const groundingChunks = response.candidates?.[0]?.groundingMetadata?.groundingChunks ?? [];
         const groundingLinks: CompetitorInfo[] = groundingChunks
             .map(chunk => ({
@@ -204,7 +195,6 @@ export async function analyzeCompetitors(topic: string): Promise<{ competitors: 
     });
 }
 
-// Updated to use responseSchema for structured JSON output
 export async function findEeatSources(topic: string): Promise<EeatSource[]> {
     return withRetry(async () => {
         const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
@@ -237,7 +227,6 @@ export async function findEeatSources(topic: string): Promise<EeatSource[]> {
     });
 }
 
-// Updated to use responseSchema for structured JSON output
 export async function generateKeywordStrategy(
     topic: string,
     rankedKeywords: RankedKeyword[],
@@ -274,7 +263,6 @@ export async function generateKeywordStrategy(
     });
 }
 
-// Added responseSchema for better JSON extraction reliability
 export async function generateOutlineSuggestions(topic: string): Promise<string[]> {
     return withRetry(async () => {
         const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
@@ -401,7 +389,6 @@ export async function generateArticleImage(prompt: string): Promise<string> {
         const parts = response.candidates?.[0]?.content?.parts;
         if (parts) {
             for (const part of parts) {
-                // Guidelines: iterate through all parts to find the image part
                 if (part.inlineData) return `data:${part.inlineData.mimeType || 'image/png'};base64,${part.inlineData.data}`;
             }
         }
@@ -420,7 +407,6 @@ export async function editArticleImage(base64Image: string, mimeType: string, pr
         const parts = response.candidates?.[0]?.content?.parts;
         if (parts) {
             for (const part of parts) {
-                // Guidelines: iterate through all parts to find the image part
                 if (part.inlineData) return `data:${part.inlineData.mimeType || 'image/png'};base64,${part.inlineData.data}`;
             }
         }
@@ -457,7 +443,7 @@ export async function generateSpeech(text: string, voice: string): Promise<strin
             model: "gemini-2.5-flash-preview-tts",
             contents: [{ parts: [{ text }] }],
             config: {
-                responseModalities: [Modality.AUDIO], // Must be an array with a single Modality.AUDIO element
+                responseModalities: [Modality.AUDIO],
                 speechConfig: { voiceConfig: { prebuiltVoiceConfig: { voiceName: voice } } },
             },
         });
