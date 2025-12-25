@@ -20,8 +20,9 @@ const IconPencil = () => <svg xmlns="http://www.w3.org/2000/svg" className="h-5 
 const IconUpload = () => <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" /></svg>;
 const IconChevronLeft = ({ className }: { className?: string }) => <svg xmlns="http://www.w3.org/2000/svg" className={className || "h-5 w-5"} viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z" clipRule="evenodd" /></svg>;
 const IconChevronRight = ({ className }: { className?: string }) => <svg xmlns="http://www.w3.org/2000/svg" className={className || "h-5 w-5"} viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clipRule="evenodd" /></svg>;
-const IconRefresh = () => <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" /></svg>;
+const IconRefresh = () => <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357-2H15" /></svg>;
 const IconCloudSync = ({ className }: { className?: string }) => <svg xmlns="http://www.w3.org/2000/svg" className={className || "h-5 w-5"} fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M9 19l3 3m0 0l3-3m-3 3V10" /></svg>;
+const IconTrash = () => <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>;
 
 const LogoIcon = ({ className }: { className?: string }) => (
   <svg viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg" className={className}>
@@ -178,11 +179,19 @@ const App: React.FC = () => {
   };
 
   const handleRestart = () => {
-    if (window.confirm("Start over? Progress will be lost.")) {
+    if (window.confirm("Start over? Progress on the current project will be lost.")) {
       setAppState(DEFAULT_STATE);
       setHighestCompletedStepIndex(-1);
       setActiveStep('Setup');
       localStorage.removeItem('rankensteinAppState');
+    }
+  };
+
+  const handleHardReset = () => {
+    if (window.confirm("WARNING: This will clear ALL cache, including your login session and project state. You will be logged out. Continue?")) {
+      localStorage.clear();
+      sessionStorage.clear();
+      window.location.reload();
     }
   };
 
@@ -270,9 +279,12 @@ const App: React.FC = () => {
             </div>
         </div>
 
-        <div className="p-4 border-t border-white/5">
-             <button onClick={handleRestart} className={`flex items-center w-full p-3 text-sm text-slate-300 rounded-full hover:bg-white/5 hover:text-red-400 transition-colors ${isSidebarCollapsed ? 'justify-center' : ''}`}>
-                <IconRefresh /><span className={isSidebarCollapsed ? 'hidden' : 'ml-3'}>Restart</span>
+        <div className="p-4 border-t border-white/5 flex flex-col gap-1">
+             <button onClick={handleRestart} className={`flex items-center w-full p-3 text-sm text-slate-300 rounded-full hover:bg-white/5 hover:text-indigo-400 transition-colors ${isSidebarCollapsed ? 'justify-center' : ''}`}>
+                <IconRefresh /><span className={isSidebarCollapsed ? 'hidden' : 'ml-3'}>Restart Project</span>
+            </button>
+             <button onClick={handleHardReset} className={`flex items-center w-full p-3 text-sm text-slate-400 rounded-full hover:bg-red-500/10 hover:text-red-400 transition-colors ${isSidebarCollapsed ? 'justify-center' : ''}`}>
+                <IconTrash /><span className={isSidebarCollapsed ? 'hidden' : 'ml-3'}>Hard Reset (Clear Cache)</span>
             </button>
         </div>
       </nav>

@@ -7,18 +7,9 @@ import { callWebhookTool } from "./webhook";
 const PRIMARY_MODEL = 'gemini-3-pro-preview';
 const FALLBACK_MODEL = 'gemini-3-flash-preview';
 
-// Initialize AI lazily to avoid potential top-level crashes
-let aiInstance: GoogleGenAI | null = null;
-const getAI = () => {
-    if (!aiInstance) {
-        // Always use named parameter for apiKey and process.env.API_KEY directly
-        aiInstance = new GoogleGenAI({ apiKey: process.env.API_KEY });
-    }
-    return aiInstance;
-};
-
-// Helper to extract JSON from a string that might contain markdown fences
+// Helper to extract JSON from a string that might contain markdown fences or extra text
 function extractJson(text: string): string {
+    if (!text) return "[]";
     const match = text.match(/```(?:json)?\s*([\s\S]*?)\s*```/);
     if (match) return match[1].trim();
     
@@ -71,8 +62,9 @@ async function withModelFallback<T>(
 
 // Added responseSchema for better JSON extraction reliability
 export async function generateTopicIdeas(theme: string): Promise<TopicIdea[]> {
-    const ai = getAI();
     return withRetry(async () => {
+        // Always instantiate a fresh client as per guidelines for reliable API key usage
+        const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
         const response = await ai.models.generateContent({
             model: 'gemini-3-flash-preview',
             contents: `Generate 5 blog topic ideas for theme '${theme}'. criteria: Answer-First, High Utility, Data Potential. Respond with a valid JSON array of {title, description}.`,
@@ -92,17 +84,16 @@ export async function generateTopicIdeas(theme: string): Promise<TopicIdea[]> {
                 }
             },
         });
-        return JSON.parse(response.text);
+        return JSON.parse(extractJson(response.text || "[]"));
     });
 }
 
 /**
- * New: Generate topics using real-world context from a website scrape (Firecrawl)
- * Updated to use responseSchema for structured JSON output as per guidelines
+ * Generate topics using real-world context from a website scrape (Firecrawl)
  */
 export async function generateTopicIdeasFromScrape(scrapedData: { content: string, title: string, description: string }, websiteUrl: string, language: string): Promise<TopicIdea[]> {
-    const ai = getAI();
     return withRetry(async () => {
+        const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
         const response = await ai.models.generateContent({
             model: PRIMARY_MODEL,
             contents: `
@@ -131,14 +122,14 @@ export async function generateTopicIdeasFromScrape(scrapedData: { content: strin
                 }
             },
         });
-        return JSON.parse(response.text);
+        return JSON.parse(extractJson(response.text || "[]"));
     });
 }
 
 // Added responseSchema for better JSON extraction reliability
 export async function generateTopicIdeasForWebsite(websiteUrl: string, country: string, language: string): Promise<TopicIdea[]> {
-    const ai = getAI();
     return withRetry(async () => {
+        const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
         const response = await ai.models.generateContent({
             model: 'gemini-3-flash-preview',
             contents: `Analyze website '${websiteUrl}'. Generate 5 blog topic ideas for '${country}' market in '${language}' that help build "Topical Authority". Respond with valid JSON array of {title, description}.`,
@@ -158,14 +149,14 @@ export async function generateTopicIdeasForWebsite(websiteUrl: string, country: 
                 }
             },
         });
-        return JSON.parse(response.text);
+        return JSON.parse(extractJson(response.text || "[]"));
     });
 }
 
 // Updated to use responseSchema for structured JSON output
 export async function analyzeCompetitors(topic: string): Promise<{ competitors: Omit<CompetitorInfo, 'url'>[], groundingLinks: CompetitorInfo[] }> {
-    const ai = getAI();
     return withRetry(async () => {
+        const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
         const response = await ai.models.generateContent({
             model: PRIMARY_MODEL,
             contents: `For topic '${topic}', analyze top 3 competitors via Google Search. Identify: main argument, content gaps, structure. Respond with valid JSON object: { competitors: [{title, summary}] }.`,
@@ -192,13 +183,14 @@ export async function analyzeCompetitors(topic: string): Promise<{ competitors: 
             },
         });
 
-        const parsedData = JSON.parse(response.text);
+        const parsedData = JSON.parse(extractJson(response.text || "{}"));
         
         const competitors = (parsedData.competitors || []).map((c: any) => ({
             title: String(c.title || 'Competitor Analysis'),
             summary: typeof c.summary === 'string' ? c.summary : JSON.stringify(c.summary)
         }));
         
+        // Guidelines: Extract website URLs from groundingChunks
         const groundingChunks = response.candidates?.[0]?.groundingMetadata?.groundingChunks ?? [];
         const groundingLinks: CompetitorInfo[] = groundingChunks
             .map(chunk => ({
@@ -214,8 +206,8 @@ export async function analyzeCompetitors(topic: string): Promise<{ competitors: 
 
 // Updated to use responseSchema for structured JSON output
 export async function findEeatSources(topic: string): Promise<EeatSource[]> {
-    const ai = getAI();
     return withRetry(async () => {
+        const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
         const response = await ai.models.generateContent({
             model: PRIMARY_MODEL,
             contents: `Find 3 authoritative, non-commercial sources for topic "${topic}". Respond with valid JSON array: [{title, url, summary}].`,
@@ -236,7 +228,7 @@ export async function findEeatSources(topic: string): Promise<EeatSource[]> {
                 }
             },
         });
-        const parsed = JSON.parse(response.text);
+        const parsed = JSON.parse(extractJson(response.text || "[]"));
         return Array.isArray(parsed) ? parsed.map((s: any) => ({
             title: s.title || "Source",
             url: s.url || "#",
@@ -251,8 +243,8 @@ export async function generateKeywordStrategy(
     rankedKeywords: RankedKeyword[],
     callWebhook: (func: 'suggested_keywords', params: { keyword: string }) => Promise<any[]>
 ): Promise<string[]> {
-    const ai = getAI();
     return withRetry(async () => {
+        const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
         const seedResponse = await ai.models.generateContent({
             model: 'gemini-3-flash-preview',
             contents: `Identify 3 high-volume seed keywords (max 2 words) for topic: "${topic}". Respond with JSON array of strings.`,
@@ -261,7 +253,7 @@ export async function generateKeywordStrategy(
                 responseSchema: { type: Type.ARRAY, items: { type: Type.STRING } }
             }
         });
-        let seeds: string[] = JSON.parse(seedResponse.text);
+        let seeds: string[] = JSON.parse(extractJson(seedResponse.text || "[]"));
 
         let allSuggestions: any[] = [];
         if (seeds.length > 0) {
@@ -278,14 +270,14 @@ export async function generateKeywordStrategy(
                 responseSchema: { type: Type.ARRAY, items: { type: Type.STRING } }
             },
         });
-        return JSON.parse(finalKeywordsResponse.text);
+        return JSON.parse(extractJson(finalKeywordsResponse.text || "[]"));
     });
 }
 
 // Added responseSchema for better JSON extraction reliability
 export async function generateOutlineSuggestions(topic: string): Promise<string[]> {
-    const ai = getAI();
     return withRetry(async () => {
+        const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
         const response = await ai.models.generateContent({
             model: 'gemini-3-flash-preview',
             contents: `Suggest 3 structural approaches for topic "${topic}" using Inverted Pyramid model. Respond with JSON array of 3 strings.`,
@@ -294,13 +286,13 @@ export async function generateOutlineSuggestions(topic: string): Promise<string[
                 responseSchema: { type: Type.ARRAY, items: { type: Type.STRING } }
             }
         });
-        return JSON.parse(response.text);
+        return JSON.parse(extractJson(response.text || "[]"));
     });
 }
 
 export async function selectRelevantInternalLinks(topic: string, allLinks: InternalLink[]): Promise<InternalLink[]> {
-    const ai = getAI();
     return withRetry(async () => {
+        const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
         const response = await ai.models.generateContent({
             model: 'gemini-3-flash-preview',
             contents: `Select 3-5 internal links for topic "${topic}". List: ${JSON.stringify(allLinks)}. Respond with JSON array of {title, url}.`,
@@ -316,13 +308,13 @@ export async function selectRelevantInternalLinks(topic: string, allLinks: Inter
                 }
             }
         });
-        return JSON.parse(response.text);
+        return JSON.parse(extractJson(response.text || "[]"));
     });
 }
 
 export async function generateOutline(topic: string, keywords: string[], competitors: Omit<CompetitorInfo, 'url'>[], internalLinks: InternalLink[]): Promise<string[]> {
-    const ai = getAI();
     return withRetry(async () => {
+        const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
         const response = await ai.models.generateContent({
             model: PRIMARY_MODEL,
             contents: `Create detailed GEO-optimized outline for '${topic}'. Keywords: ${keywords.join(', ')}. Respond with JSON array of strings.`,
@@ -331,13 +323,13 @@ export async function generateOutline(topic: string, keywords: string[], competi
                 responseSchema: { type: Type.ARRAY, items: { type: Type.STRING } }
             }
         });
-        return JSON.parse(response.text);
+        return JSON.parse(extractJson(response.text || "[]"));
     });
 }
 
 export async function refineOutlineWithAI(currentOutline: string, topic: string, keywords: string[], competitors: Omit<CompetitorInfo, 'url'>[], internalLinks: InternalLink[]): Promise<string[]> {
-    const ai = getAI();
     return withRetry(async () => {
+        const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
         const response = await ai.models.generateContent({
             model: PRIMARY_MODEL,
             contents: `Refine this outline for topic '${topic}': ${currentOutline}. Ensure Answer-First and E-E-A-T. Respond with JSON array of strings.`,
@@ -346,13 +338,13 @@ export async function refineOutlineWithAI(currentOutline: string, topic: string,
                 responseSchema: { type: Type.ARRAY, items: { type: Type.STRING } }
             }
         });
-        return JSON.parse(response.text);
+        return JSON.parse(extractJson(response.text || "[]"));
     });
 }
 
 export async function generateLongFormContent(prompt: string, internalLinks: InternalLink[]) {
     return await withModelFallback(async (model) => {
-        const ai = getAI();
+        const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
         const textPrompt = `${prompt}. Integration: ${internalLinks.map(l => `- ${l.title} (${l.url})`).join('\n')}. Use standard Markdown. Start with # Title. Stream now.`;
         return await ai.models.generateContentStream({ model: model, contents: textPrompt });
     });
@@ -360,23 +352,23 @@ export async function generateLongFormContent(prompt: string, internalLinks: Int
 
 export async function reviewArticle(draft: string): Promise<string> {
     return await withModelFallback(async (model) => {
-        const ai = getAI();
+        const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
         const response = await ai.models.generateContent({
             model: model,
             contents: `Clean and polish this Markdown draft, removing AI filler and fixing headers: ${draft}`,
         });
-        return response.text.trim();
+        return (response.text || "").trim();
     });
 }
 
 export async function generateContextualAddition(prevContext: string, nextContext: string, type: 'TEXT' | 'IMAGE' | 'GRAPH' | 'TABLE'): Promise<string> {
     return await withModelFallback(async (model) => {
-        const ai = getAI();
+        const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
         const response = await ai.models.generateContent({
             model: model,
             contents: `Connect these contexts: Before: ${prevContext.slice(-200)} After: ${nextContext.slice(0, 200)}. Type: ${type}.`,
         });
-        let result = response.text.trim();
+        let result = (response.text || "").trim();
         if (type === 'IMAGE') return `[IMAGE: ${result}]`;
         if (type === 'GRAPH') return `[GRAPH: ${result}]`;
         return result;
@@ -384,8 +376,8 @@ export async function generateContextualAddition(prevContext: string, nextContex
 }
 
 export async function chatWithDraft(currentDraft: string, chatHistory: { role: 'user' | 'model'; text: string }[], userMessage: string, appState: { websiteUrl: string, country: string, language: string }): Promise<string> {
-    const ai = getAI();
     return await withModelFallback(async (model) => {
+        const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
         const chat = ai.chats.create({
             model: model,
             config: {
@@ -395,13 +387,13 @@ export async function chatWithDraft(currentDraft: string, chatHistory: { role: '
             history: chatHistory.map(h => ({ role: h.role, parts: [{ text: h.text }] }))
         });
         const result = await chat.sendMessage({ message: userMessage });
-        return result.text;
+        return result.text || "";
     });
 }
 
 export async function generateArticleImage(prompt: string): Promise<string> {
-    const ai = getAI();
     const tryNanoBanana = async () => {
+        const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
         const response = await ai.models.generateContent({
             model: 'gemini-2.5-flash-image',
             contents: { parts: [{ text: `${prompt} . Authentic editorial photography, 35mm film style.` }] },
@@ -409,6 +401,7 @@ export async function generateArticleImage(prompt: string): Promise<string> {
         const parts = response.candidates?.[0]?.content?.parts;
         if (parts) {
             for (const part of parts) {
+                // Guidelines: iterate through all parts to find the image part
                 if (part.inlineData) return `data:${part.inlineData.mimeType || 'image/png'};base64,${part.inlineData.data}`;
             }
         }
@@ -418,8 +411,8 @@ export async function generateArticleImage(prompt: string): Promise<string> {
 }
 
 export async function editArticleImage(base64Image: string, mimeType: string, prompt: string): Promise<string> {
-    const ai = getAI();
     return withRetry(async () => {
+        const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
         const response = await ai.models.generateContent({
             model: 'gemini-2.5-flash-image',
             contents: { parts: [{ inlineData: { data: base64Image, mimeType } }, { text: prompt }] },
@@ -427,6 +420,7 @@ export async function editArticleImage(base64Image: string, mimeType: string, pr
         const parts = response.candidates?.[0]?.content?.parts;
         if (parts) {
             for (const part of parts) {
+                // Guidelines: iterate through all parts to find the image part
                 if (part.inlineData) return `data:${part.inlineData.mimeType || 'image/png'};base64,${part.inlineData.data}`;
             }
         }
@@ -435,35 +429,35 @@ export async function editArticleImage(base64Image: string, mimeType: string, pr
 }
 
 export async function transformText(text: string, action: string, language: string): Promise<string> {
-    const ai = getAI();
     return await withModelFallback(async (model) => {
+        const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
         const response = await ai.models.generateContent({
             model: model,
             contents: `Action: ${action}, Language: ${language}. Text: ${text}. Return ONLY rewritten text.`,
         });
-        return response.text.trim();
+        return (response.text || "").trim();
     });
 }
 
 export async function regenerateTitle(articleContent: string): Promise<string> {
-    const ai = getAI();
     return withRetry(async () => {
+        const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
         const response = await ai.models.generateContent({
             model: 'gemini-3-flash-preview',
             contents: `Generate a click-worthy headline for: ${articleContent.substring(0, 1000)}`,
         });
-        return response.text.trim();
+        return (response.text || "").trim();
     });
 }
 
 export async function generateSpeech(text: string, voice: string): Promise<string> {
-    const ai = getAI();
     return withRetry(async () => {
+        const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
         const response = await ai.models.generateContent({
             model: "gemini-2.5-flash-preview-tts",
             contents: [{ parts: [{ text }] }],
             config: {
-                responseModalities: [Modality.AUDIO],
+                responseModalities: [Modality.AUDIO], // Must be an array with a single Modality.AUDIO element
                 speechConfig: { voiceConfig: { prebuiltVoiceConfig: { voiceName: voice } } },
             },
         });
@@ -474,8 +468,8 @@ export async function generateSpeech(text: string, voice: string): Promise<strin
 }
 
 export async function generateSocialPosts(text: string): Promise<Record<string, string>> {
-    const ai = getAI();
     return withRetry(async () => {
+        const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
         const response = await ai.models.generateContent({
             model: 'gemini-3-flash-preview',
             contents: `Create social posts for: ${text}. Return JSON: {twitter, linkedin, reddit, instagram, facebook}.`,
@@ -494,6 +488,6 @@ export async function generateSocialPosts(text: string): Promise<Record<string, 
                 }
             }
         });
-        return JSON.parse(response.text);
+        return JSON.parse(extractJson(response.text || "{}"));
     });
 }

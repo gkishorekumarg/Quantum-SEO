@@ -1,5 +1,5 @@
 
-import React, { ErrorInfo, ReactNode } from 'react';
+import React, { Component, ErrorInfo, ReactNode } from 'react';
 import ReactDOM from 'react-dom/client';
 import App from './App';
 
@@ -12,13 +12,10 @@ interface State {
   error: Error | null;
 }
 
-// Fixed ErrorBoundary inheritance by using React.Component explicitly to ensure 'this.props' is correctly recognized by the TypeScript compiler
+// Fixed ErrorBoundary inheritance by using React.Component explicitly to ensure 'this.props' is correctly recognized by the TypeScript compiler.
+// Class components are required for Error Boundaries in React as of current versions.
 class ErrorBoundary extends React.Component<Props, State> {
   public state: State = { hasError: false, error: null };
-
-  constructor(props: Props) {
-    super(props);
-  }
 
   public static getDerivedStateFromError(error: Error): State {
     return { hasError: true, error };
@@ -28,7 +25,7 @@ class ErrorBoundary extends React.Component<Props, State> {
     console.error("Uncaught error:", error, errorInfo);
   }
 
-  public render() {
+  public render(): ReactNode {
     if (this.state.hasError) {
       return (
         <div className="min-h-screen bg-slate-900 text-white flex flex-col items-center justify-center p-8">
@@ -50,7 +47,7 @@ class ErrorBoundary extends React.Component<Props, State> {
         </div>
       );
     }
-    // Correctly accessing children via this.props from the React.Component base class
+    // Correctly accessing children via this.props from the Component base class
     return this.props.children;
   }
 }
