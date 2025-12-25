@@ -159,7 +159,7 @@ const IntroScreen: React.FC<Props> = ({ onStart }) => {
                 <div className="px-4 py-1.5 bg-indigo-600 text-white rounded-full shadow-lg shadow-indigo-600/40 border border-indigo-400/50 flex items-center gap-2">
                     <span className="w-2 h-2 bg-emerald-400 rounded-full animate-pulse"></span>
                     <span className="text-xs font-black tracking-widest uppercase font-mono">
-                        Version 1.2.9 Updated
+                        Version 1.3.0 Updated
                     </span>
                 </div>
                 
@@ -182,7 +182,7 @@ const IntroScreen: React.FC<Props> = ({ onStart }) => {
                 Powered by Gemini AI
             </div>
             <div className="text-slate-500 font-mono text-[9px]">
-                ENV_INJECTION: SECURE_V2
+                ENV_INJECTION: CLIENT_VITE_V1
             </div>
         </div>
       </div>
