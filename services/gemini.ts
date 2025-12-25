@@ -227,11 +227,14 @@ export async function generateArticleImage(prompt: string): Promise<string> {
         model: 'gemini-2.5-flash-image',
         contents: { parts: [{ text: prompt }] },
     });
-    const candidates = response.candidates;
-    if (candidates && candidates.length > 0) {
-        const parts = candidates[0].content.parts;
+    
+    // Defensive checks for TypeScript null safety
+    const candidate = response.candidates?.[0];
+    const parts = candidate?.content?.parts;
+    
+    if (parts) {
         const part = parts.find(p => p.inlineData);
-        if (part && part.inlineData) {
+        if (part?.inlineData) {
             return `data:image/png;base64,${part.inlineData.data}`;
         }
     }
@@ -244,11 +247,14 @@ export async function editArticleImage(base64: string, mime: string, prompt: str
         model: 'gemini-2.5-flash-image',
         contents: { parts: [{ inlineData: { data: base64, mimeType: mime } }, { text: prompt }] },
     });
-    const candidates = response.candidates;
-    if (candidates && candidates.length > 0) {
-        const parts = candidates[0].content.parts;
+
+    // Defensive checks for TypeScript null safety
+    const candidate = response.candidates?.[0];
+    const parts = candidate?.content?.parts;
+    
+    if (parts) {
         const part = parts.find(p => p.inlineData);
-        if (part && part.inlineData) {
+        if (part?.inlineData) {
             return `data:image/png;base64,${part.inlineData.data}`;
         }
     }
