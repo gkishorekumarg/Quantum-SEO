@@ -69,7 +69,7 @@ const IntroScreen: React.FC<Props> = ({ onStart }) => {
         uniform float iTime;
         uniform vec2 iResolution;
 
-        #define NUM_OCTAVES 3
+        #define NUM_OCTAVES(i) int(i)
 
         float rand(vec2 n) {
           return fract(sin(dot(n, vec2(12.9898, 4.1414))) * 43758.5453);
@@ -85,7 +85,7 @@ const IntroScreen: React.FC<Props> = ({ onStart }) => {
         float fbm(vec2 x) {
           float v = 0.0; float a = 0.3; vec2 shift = vec2(100);
           mat2 rot = mat2(cos(0.5), sin(0.5), -sin(0.5), cos(0.5));
-          for (int i = 0; i < NUM_OCTAVES; ++i) {
+          for (int i = 0; i < 3; ++i) {
             v += a * noise(x); x = rot * x * 2.0 + shift; a *= 0.4;
           }
           return v;
@@ -150,24 +150,26 @@ const IntroScreen: React.FC<Props> = ({ onStart }) => {
             <h1 className="text-5xl md:text-7xl font-extrabold mb-4 tracking-tight text-transparent bg-clip-text bg-gradient-to-br from-white to-indigo-300">
               Quantum SEO
             </h1>
-            <p className="text-xl md:text-2xl text-indigo-100 mb-8 font-light max-w-lg">
+            <p className="text-xl md:text-2xl text-indigo-100 mb-10 font-light max-w-lg">
             Create content that <span className="font-semibold text-indigo-300">Ranks</span>.
             </p>
             
-            <div className="flex flex-col items-center gap-4">
-                <div className="px-3 py-1 bg-indigo-500/10 border border-indigo-500/20 rounded-full">
-                    <span className="text-[10px] font-mono font-bold tracking-[0.2em] text-indigo-300 uppercase">
-                        Version 1.2.8
+            <div className="flex flex-col items-center gap-6">
+                {/* HIGH VISIBILITY VERSION BADGE */}
+                <div className="px-4 py-1.5 bg-indigo-600 text-white rounded-full shadow-lg shadow-indigo-600/40 border border-indigo-400/50 flex items-center gap-2">
+                    <span className="w-2 h-2 bg-emerald-400 rounded-full animate-pulse"></span>
+                    <span className="text-xs font-black tracking-widest uppercase font-mono">
+                        Version 1.2.9 Updated
                     </span>
                 </div>
                 
                 <button 
                     onClick={onStart} 
-                    className="group relative px-12 py-4 bg-indigo-600 hover:bg-indigo-500 rounded-full transition-all duration-300 hover:scale-105 active:scale-95 shadow-lg shadow-indigo-500/20 border border-indigo-400/30"
+                    className="group relative px-14 py-5 bg-indigo-600 hover:bg-indigo-500 rounded-full transition-all duration-300 hover:scale-105 active:scale-95 shadow-xl shadow-indigo-500/30 border border-indigo-400/40"
                 >
-                    <span className="relative text-lg font-semibold flex items-center gap-3">
+                    <span className="relative text-xl font-bold flex items-center gap-4">
                         Start Engine
-                        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 group-hover:translate-x-1 transition-transform" viewBox="0 0 20 20" fill="currentColor">
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 group-hover:translate-x-1 transition-transform" viewBox="0 0 20 20" fill="currentColor">
                             <path fillRule="evenodd" d="M10.293 3.293a1 1 0 011.414 0l6 6a1 1 0 010 1.414l-6 6a1 1 0 01-1.414-1.414L14.586 11H3a1 1 0 110-2h11.586l-4.293-4.293a1 1 0 010-1.414z" clipRule="evenodd" />
                         </svg>
                     </span>
@@ -176,11 +178,11 @@ const IntroScreen: React.FC<Props> = ({ onStart }) => {
         </div>
         
         <div className="absolute bottom-8 flex flex-col items-center gap-1 opacity-40">
-            <div className="text-indigo-200 text-[10px] tracking-widest uppercase">
-                Powered by Gemini
+            <div className="text-indigo-200 text-[10px] tracking-widest uppercase font-bold">
+                Powered by Gemini AI
             </div>
             <div className="text-slate-500 font-mono text-[9px]">
-                BUILD ID: 01-42-45
+                ENV_INJECTION: SECURE_V2
             </div>
         </div>
       </div>

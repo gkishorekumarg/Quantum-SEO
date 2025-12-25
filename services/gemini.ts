@@ -10,8 +10,8 @@ const FALLBACK_MODEL = 'gemini-3-flash-preview';
 function getApiKey() {
     const key = process.env.API_KEY;
     if (!key || key === 'undefined' || key === '') {
-        console.error("CRITICAL: API_KEY is missing. Ensure it is set in Vercel Environment Variables.");
-        throw new Error("Gemini API Key is missing. Please check your deployment settings.");
+        console.error("CRITICAL: API_KEY is missing in process.env.");
+        throw new Error("Gemini API Key missing. Action required: Go to Vercel Dashboard -> Settings -> Environment Variables. Add 'API_KEY' with your Gemini key. Then RE-DEPLOY.");
     }
     return key;
 }
