@@ -1,10 +1,8 @@
-import { GoogleGenAI, Type, Modality, GenerateContentResponse } from "@google/genai";
-import { TopicIdea, CompetitorInfo, InternalLink, RankedKeyword, EeatSource } from "../types";
-import { callWebhookTool } from "./webhook";
+import { GoogleGenAI, Type, Modality } from "@google/genai";
+import { TopicIdea, CompetitorInfo, InternalLink, EeatSource } from "../types";
 
 // Define recommended models
 const PRIMARY_MODEL = 'gemini-3-pro-preview';
-const FALLBACK_MODEL = 'gemini-3-flash-preview';
 
 /**
  * Senior Engineer Note:
@@ -76,9 +74,6 @@ export async function generateTopicIdeas(theme: string): Promise<TopicIdea[]> {
         return JSON.parse(extractJson(response.text || "[]"));
     });
 }
-
-// ... rest of the service functions follow the same pattern ...
-// Note: Keeping functions minimal for the solution block as requested.
 
 export async function generateTopicIdeasFromScrape(scrapedData: any, websiteUrl: string, language: string): Promise<TopicIdea[]> {
     return withRetry(async () => {
@@ -232,9 +227,15 @@ export async function generateArticleImage(prompt: string): Promise<string> {
         model: 'gemini-2.5-flash-image',
         contents: { parts: [{ text: prompt }] },
     });
-    const part = response.candidates?.[0]?.content?.parts.find(p => p.inlineData);
-    if (!part) throw new Error("No image generated.");
-    return `data:image/png;base64,${part.inlineData.data}`;
+    const candidates = response.candidates;
+    if (candidates && candidates.length > 0) {
+        const parts = candidates[0].content.parts;
+        const part = parts.find(p => p.inlineData);
+        if (part && part.inlineData) {
+            return `data:image/png;base64,${part.inlineData.data}`;
+        }
+    }
+    throw new Error("No image generated.");
 }
 
 export async function editArticleImage(base64: string, mime: string, prompt: string): Promise<string> {
@@ -243,9 +244,15 @@ export async function editArticleImage(base64: string, mime: string, prompt: str
         model: 'gemini-2.5-flash-image',
         contents: { parts: [{ inlineData: { data: base64, mimeType: mime } }, { text: prompt }] },
     });
-    const part = response.candidates?.[0]?.content?.parts.find(p => p.inlineData);
-    if (!part) throw new Error("No image generated.");
-    return `data:image/png;base64,${part.inlineData.data}`;
+    const candidates = response.candidates;
+    if (candidates && candidates.length > 0) {
+        const parts = candidates[0].content.parts;
+        const part = parts.find(p => p.inlineData);
+        if (part && part.inlineData) {
+            return `data:image/png;base64,${part.inlineData.data}`;
+        }
+    }
+    throw new Error("No image generated.");
 }
 
 export async function transformText(text: string, action: string, lang: string): Promise<string> {
