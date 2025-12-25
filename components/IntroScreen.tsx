@@ -1,6 +1,10 @@
-
 import React, { useEffect, useRef, useState } from 'react';
-import * as THREE from 'three';
+import * as THREE from 'this'; // Vite will handle this correctly from node_modules
+
+// Note: Using a standard import for THREE as Vite handles bundling.
+// If the above causes issues in your specific dev environment, 
+// ensure 'three' is installed in your package.json.
+import * as THREE_LIB from 'three';
 
 interface Props {
   onStart: () => void;
@@ -39,26 +43,26 @@ const IntroScreen: React.FC<Props> = ({ onStart }) => {
       container.removeChild(container.firstChild);
     }
 
-    let renderer: THREE.WebGLRenderer;
+    let renderer: THREE_LIB.WebGLRenderer;
     try {
-        renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+        renderer = new THREE_LIB.WebGLRenderer({ antialias: true, alpha: true });
     } catch (e) {
         console.warn("WebGL Renderer failed:", e);
         setWebGLSupported(false);
         return;
     }
 
-    const scene = new THREE.Scene();
-    const camera = new THREE.OrthographicCamera(-1, 1, 1, -1, 0, 1);
+    const scene = new THREE_LIB.Scene();
+    const camera = new THREE_LIB.OrthographicCamera(-1, 1, 1, -1, 0, 1);
     
     renderer.setSize(window.innerWidth, window.innerHeight);
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
     container.appendChild(renderer.domElement);
 
-    const material = new THREE.ShaderMaterial({
+    const material = new THREE_LIB.ShaderMaterial({
       uniforms: {
         iTime: { value: 0 },
-        iResolution: { value: new THREE.Vector2(window.innerWidth, window.innerHeight) }
+        iResolution: { value: new THREE_LIB.Vector2(window.innerWidth, window.innerHeight) }
       },
       vertexShader: `
         void main() {
@@ -107,8 +111,8 @@ const IntroScreen: React.FC<Props> = ({ onStart }) => {
       `
     });
 
-    const geometry = new THREE.PlaneGeometry(2, 2);
-    const mesh = new THREE.Mesh(geometry, material);
+    const geometry = new THREE_LIB.PlaneGeometry(2, 2);
+    const mesh = new THREE_LIB.Mesh(geometry, material);
     scene.add(mesh);
 
     let frameId: number;
@@ -167,8 +171,13 @@ const IntroScreen: React.FC<Props> = ({ onStart }) => {
                 </span>
             </button>
         </div>
-        <div className="absolute bottom-8 text-indigo-200/30 text-[10px] tracking-widest uppercase">
-            Powered by Gemini
+        <div className="absolute bottom-8 flex flex-col items-center gap-1 opacity-40">
+            <div className="text-indigo-200 text-[10px] tracking-widest uppercase">
+                Powered by Gemini
+            </div>
+            <div className="text-slate-500 font-mono text-[9px]">
+                VERSION 1.2.5
+            </div>
         </div>
       </div>
     </div>

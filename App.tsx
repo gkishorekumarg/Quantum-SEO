@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useCallback } from 'react';
 import { WorkflowStep, WORKFLOW_STEPS, AppState, InternalLink } from './types';
 import Setup from './components/Setup';
@@ -238,7 +237,10 @@ const App: React.FC = () => {
             {!isSidebarCollapsed && (
               <div className="ml-3 flex flex-col animate-fade-in">
                  <h1 className="text-xl font-bold text-slate-100 leading-none">Quantum SEO</h1>
-                 <span className="text-[10px] text-indigo-400 font-medium mt-1 uppercase">Content Engine</span>
+                 <div className="flex items-center gap-2 mt-1">
+                   <span className="text-[10px] text-indigo-400 font-medium uppercase">Content Engine</span>
+                   <span className="text-[9px] text-slate-500 font-mono">v1.2.5</span>
+                 </div>
               </div>
             )}
           </div>

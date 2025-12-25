@@ -1,4 +1,3 @@
-
 import { GoogleGenAI, Type, Modality, GenerateContentResponse, Part, FunctionDeclaration, Tool } from "@google/genai";
 import { ResearchResult, TopicIdea, CompetitorInfo, InternalLink, RankedKeyword, EeatSource } from "../types";
 import { callWebhookTool } from "./webhook";
