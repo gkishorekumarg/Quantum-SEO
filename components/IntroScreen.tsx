@@ -150,28 +150,37 @@ const IntroScreen: React.FC<Props> = ({ onStart }) => {
             <h1 className="text-5xl md:text-7xl font-extrabold mb-4 tracking-tight text-transparent bg-clip-text bg-gradient-to-br from-white to-indigo-300">
               Quantum SEO
             </h1>
-            <p className="text-xl md:text-2xl text-indigo-100 mb-12 font-light max-w-lg">
+            <p className="text-xl md:text-2xl text-indigo-100 mb-8 font-light max-w-lg">
             Create content that <span className="font-semibold text-indigo-300">Ranks</span>.
             </p>
             
-            <button 
-                onClick={onStart} 
-                className="group relative px-10 py-4 bg-indigo-600 hover:bg-indigo-500 rounded-full transition-all duration-300 hover:scale-105 active:scale-95 shadow-lg shadow-indigo-500/20"
-            >
-                <span className="relative text-lg font-semibold flex items-center gap-3">
-                    Start Engine
-                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 group-hover:translate-x-1 transition-transform" viewBox="0 0 20 20" fill="currentColor">
-                        <path fillRule="evenodd" d="M10.293 3.293a1 1 0 011.414 0l6 6a1 1 0 010 1.414l-6 6a1 1 0 01-1.414-1.414L14.586 11H3a1 1 0 110-2h11.586l-4.293-4.293a1 1 0 010-1.414z" clipRule="evenodd" />
-                    </svg>
-                </span>
-            </button>
+            <div className="flex flex-col items-center gap-4">
+                <div className="px-3 py-1 bg-indigo-500/10 border border-indigo-500/20 rounded-full">
+                    <span className="text-[10px] font-mono font-bold tracking-[0.2em] text-indigo-300 uppercase">
+                        Version 1.2.8
+                    </span>
+                </div>
+                
+                <button 
+                    onClick={onStart} 
+                    className="group relative px-12 py-4 bg-indigo-600 hover:bg-indigo-500 rounded-full transition-all duration-300 hover:scale-105 active:scale-95 shadow-lg shadow-indigo-500/20 border border-indigo-400/30"
+                >
+                    <span className="relative text-lg font-semibold flex items-center gap-3">
+                        Start Engine
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 group-hover:translate-x-1 transition-transform" viewBox="0 0 20 20" fill="currentColor">
+                            <path fillRule="evenodd" d="M10.293 3.293a1 1 0 011.414 0l6 6a1 1 0 010 1.414l-6 6a1 1 0 01-1.414-1.414L14.586 11H3a1 1 0 110-2h11.586l-4.293-4.293a1 1 0 010-1.414z" clipRule="evenodd" />
+                        </svg>
+                    </span>
+                </button>
+            </div>
         </div>
+        
         <div className="absolute bottom-8 flex flex-col items-center gap-1 opacity-40">
             <div className="text-indigo-200 text-[10px] tracking-widest uppercase">
                 Powered by Gemini
             </div>
             <div className="text-slate-500 font-mono text-[9px]">
-                VERSION 1.2.6
+                BUILD ID: 01-42-45
             </div>
         </div>
       </div>

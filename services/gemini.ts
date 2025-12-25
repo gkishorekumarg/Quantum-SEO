@@ -6,6 +6,16 @@ import { callWebhookTool } from "./webhook";
 const PRIMARY_MODEL = 'gemini-3-pro-preview';
 const FALLBACK_MODEL = 'gemini-3-flash-preview';
 
+// Validation helper
+function getApiKey() {
+    const key = process.env.API_KEY;
+    if (!key || key === 'undefined' || key === '') {
+        console.error("CRITICAL: API_KEY is missing. Ensure it is set in Vercel Environment Variables.");
+        throw new Error("Gemini API Key is missing. Please check your deployment settings.");
+    }
+    return key;
+}
+
 // Helper to extract JSON from a string that might contain markdown fences or extra text
 function extractJson(text: string): string {
     if (!text) return "[]";
@@ -61,7 +71,7 @@ async function withModelFallback<T>(
 
 export async function generateTopicIdeas(theme: string): Promise<TopicIdea[]> {
     return withRetry(async () => {
-        const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+        const ai = new GoogleGenAI({ apiKey: getApiKey() });
         const response = await ai.models.generateContent({
             model: 'gemini-3-flash-preview',
             contents: `Generate 5 blog topic ideas for theme '${theme}'. criteria: Answer-First, High Utility, Data Potential. Respond with a valid JSON array of {title, description}.`,
@@ -87,7 +97,7 @@ export async function generateTopicIdeas(theme: string): Promise<TopicIdea[]> {
 
 export async function generateTopicIdeasFromScrape(scrapedData: { content: string, title: string, description: string }, websiteUrl: string, language: string): Promise<TopicIdea[]> {
     return withRetry(async () => {
-        const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+        const ai = new GoogleGenAI({ apiKey: getApiKey() });
         const response = await ai.models.generateContent({
             model: PRIMARY_MODEL,
             contents: `
@@ -122,7 +132,7 @@ export async function generateTopicIdeasFromScrape(scrapedData: { content: strin
 
 export async function generateTopicIdeasForWebsite(websiteUrl: string, country: string, language: string): Promise<TopicIdea[]> {
     return withRetry(async () => {
-        const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+        const ai = new GoogleGenAI({ apiKey: getApiKey() });
         const response = await ai.models.generateContent({
             model: 'gemini-3-flash-preview',
             contents: `Analyze website '${websiteUrl}'. Generate 5 blog topic ideas for '${country}' market in '${language}' that help build "Topical Authority". Respond with valid JSON array of {title, description}.`,
@@ -148,7 +158,7 @@ export async function generateTopicIdeasForWebsite(websiteUrl: string, country: 
 
 export async function analyzeCompetitors(topic: string): Promise<{ competitors: Omit<CompetitorInfo, 'url'>[], groundingLinks: CompetitorInfo[] }> {
     return withRetry(async () => {
-        const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+        const ai = new GoogleGenAI({ apiKey: getApiKey() });
         const response = await ai.models.generateContent({
             model: PRIMARY_MODEL,
             contents: `For topic '${topic}', analyze top 3 competitors via Google Search. Identify: main argument, content gaps, structure. Respond with valid JSON object: { competitors: [{title, summary}] }.`,
@@ -196,7 +206,7 @@ export async function analyzeCompetitors(topic: string): Promise<{ competitors: 
 
 export async function findEeatSources(topic: string): Promise<EeatSource[]> {
     return withRetry(async () => {
-        const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+        const ai = new GoogleGenAI({ apiKey: getApiKey() });
         const response = await ai.models.generateContent({
             model: PRIMARY_MODEL,
             contents: `Find 3 authoritative, non-commercial sources for topic "${topic}". Respond with valid JSON array: [{title, url, summary}].`,
@@ -232,7 +242,7 @@ export async function generateKeywordStrategy(
     callWebhook: (func: 'suggested_keywords', params: { keyword: string }) => Promise<any[]>
 ): Promise<string[]> {
     return withRetry(async () => {
-        const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+        const ai = new GoogleGenAI({ apiKey: getApiKey() });
         const seedResponse = await ai.models.generateContent({
             model: 'gemini-3-flash-preview',
             contents: `Identify 3 high-volume seed keywords (max 2 words) for topic: "${topic}". Respond with JSON array of strings.`,
@@ -264,7 +274,7 @@ export async function generateKeywordStrategy(
 
 export async function generateOutlineSuggestions(topic: string): Promise<string[]> {
     return withRetry(async () => {
-        const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+        const ai = new GoogleGenAI({ apiKey: getApiKey() });
         const response = await ai.models.generateContent({
             model: 'gemini-3-flash-preview',
             contents: `Suggest 3 structural approaches for topic "${topic}" using Inverted Pyramid model. Respond with JSON array of 3 strings.`,
@@ -279,7 +289,7 @@ export async function generateOutlineSuggestions(topic: string): Promise<string[
 
 export async function selectRelevantInternalLinks(topic: string, allLinks: InternalLink[]): Promise<InternalLink[]> {
     return withRetry(async () => {
-        const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+        const ai = new GoogleGenAI({ apiKey: getApiKey() });
         const response = await ai.models.generateContent({
             model: 'gemini-3-flash-preview',
             contents: `Select 3-5 internal links for topic "${topic}". List: ${JSON.stringify(allLinks)}. Respond with JSON array of {title, url}.`,
@@ -301,7 +311,7 @@ export async function selectRelevantInternalLinks(topic: string, allLinks: Inter
 
 export async function generateOutline(topic: string, keywords: string[], competitors: Omit<CompetitorInfo, 'url'>[], internalLinks: InternalLink[]): Promise<string[]> {
     return withRetry(async () => {
-        const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+        const ai = new GoogleGenAI({ apiKey: getApiKey() });
         const response = await ai.models.generateContent({
             model: PRIMARY_MODEL,
             contents: `Create detailed GEO-optimized outline for '${topic}'. Keywords: ${keywords.join(', ')}. Respond with JSON array of strings.`,
@@ -316,7 +326,7 @@ export async function generateOutline(topic: string, keywords: string[], competi
 
 export async function refineOutlineWithAI(currentOutline: string, topic: string, keywords: string[], competitors: Omit<CompetitorInfo, 'url'>[], internalLinks: InternalLink[]): Promise<string[]> {
     return withRetry(async () => {
-        const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+        const ai = new GoogleGenAI({ apiKey: getApiKey() });
         const response = await ai.models.generateContent({
             model: PRIMARY_MODEL,
             contents: `Refine this outline for topic '${topic}': ${currentOutline}. Ensure Answer-First and E-E-A-T. Respond with JSON array of strings.`,
@@ -331,7 +341,7 @@ export async function refineOutlineWithAI(currentOutline: string, topic: string,
 
 export async function generateLongFormContent(prompt: string, internalLinks: InternalLink[]) {
     return await withModelFallback(async (model) => {
-        const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+        const ai = new GoogleGenAI({ apiKey: getApiKey() });
         const textPrompt = `${prompt}. Integration: ${internalLinks.map(l => `- ${l.title} (${l.url})`).join('\n')}. Use standard Markdown. Start with # Title. Stream now.`;
         return await ai.models.generateContentStream({ model: model, contents: textPrompt });
     });
@@ -339,7 +349,7 @@ export async function generateLongFormContent(prompt: string, internalLinks: Int
 
 export async function reviewArticle(draft: string): Promise<string> {
     return await withModelFallback(async (model) => {
-        const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+        const ai = new GoogleGenAI({ apiKey: getApiKey() });
         const response = await ai.models.generateContent({
             model: model,
             contents: `Clean and polish this Markdown draft, removing AI filler and fixing headers: ${draft}`,
@@ -350,7 +360,7 @@ export async function reviewArticle(draft: string): Promise<string> {
 
 export async function generateContextualAddition(prevContext: string, nextContext: string, type: 'TEXT' | 'IMAGE' | 'GRAPH' | 'TABLE'): Promise<string> {
     return await withModelFallback(async (model) => {
-        const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+        const ai = new GoogleGenAI({ apiKey: getApiKey() });
         const response = await ai.models.generateContent({
             model: model,
             contents: `Connect these contexts: Before: ${prevContext.slice(-200)} After: ${nextContext.slice(0, 200)}. Type: ${type}.`,
@@ -364,7 +374,7 @@ export async function generateContextualAddition(prevContext: string, nextContex
 
 export async function chatWithDraft(currentDraft: string, chatHistory: { role: 'user' | 'model'; text: string }[], userMessage: string, appState: { websiteUrl: string, country: string, language: string }): Promise<string> {
     return await withModelFallback(async (model) => {
-        const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+        const ai = new GoogleGenAI({ apiKey: getApiKey() });
         const chat = ai.chats.create({
             model: model,
             config: {
@@ -380,7 +390,7 @@ export async function chatWithDraft(currentDraft: string, chatHistory: { role: '
 
 export async function generateArticleImage(prompt: string): Promise<string> {
     const tryNanoBanana = async () => {
-        const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+        const ai = new GoogleGenAI({ apiKey: getApiKey() });
         const response = await ai.models.generateContent({
             model: 'gemini-2.5-flash-image',
             contents: { parts: [{ text: `${prompt} . Authentic editorial photography, 35mm film style.` }] },
@@ -398,7 +408,7 @@ export async function generateArticleImage(prompt: string): Promise<string> {
 
 export async function editArticleImage(base64Image: string, mimeType: string, prompt: string): Promise<string> {
     return withRetry(async () => {
-        const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+        const ai = new GoogleGenAI({ apiKey: getApiKey() });
         const response = await ai.models.generateContent({
             model: 'gemini-2.5-flash-image',
             contents: { parts: [{ inlineData: { data: base64Image, mimeType } }, { text: prompt }] },
@@ -415,7 +425,7 @@ export async function editArticleImage(base64Image: string, mimeType: string, pr
 
 export async function transformText(text: string, action: string, language: string): Promise<string> {
     return await withModelFallback(async (model) => {
-        const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+        const ai = new GoogleGenAI({ apiKey: getApiKey() });
         const response = await ai.models.generateContent({
             model: model,
             contents: `Action: ${action}, Language: ${language}. Text: ${text}. Return ONLY rewritten text.`,
@@ -426,7 +436,7 @@ export async function transformText(text: string, action: string, language: stri
 
 export async function regenerateTitle(articleContent: string): Promise<string> {
     return withRetry(async () => {
-        const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+        const ai = new GoogleGenAI({ apiKey: getApiKey() });
         const response = await ai.models.generateContent({
             model: 'gemini-3-flash-preview',
             contents: `Generate a click-worthy headline for: ${articleContent.substring(0, 1000)}`,
@@ -437,7 +447,7 @@ export async function regenerateTitle(articleContent: string): Promise<string> {
 
 export async function generateSpeech(text: string, voice: string): Promise<string> {
     return withRetry(async () => {
-        const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+        const ai = new GoogleGenAI({ apiKey: getApiKey() });
         const response = await ai.models.generateContent({
             model: "gemini-2.5-flash-preview-tts",
             contents: [{ parts: [{ text }] }],
@@ -454,7 +464,7 @@ export async function generateSpeech(text: string, voice: string): Promise<strin
 
 export async function generateSocialPosts(text: string): Promise<Record<string, string>> {
     return withRetry(async () => {
-        const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+        const ai = new GoogleGenAI({ apiKey: getApiKey() });
         const response = await ai.models.generateContent({
             model: 'gemini-3-flash-preview',
             contents: `Create social posts for: ${text}. Return JSON: {twitter, linkedin, reddit, instagram, facebook}.`,

@@ -239,7 +239,7 @@ const App: React.FC = () => {
                  <h1 className="text-xl font-bold text-slate-100 leading-none">Quantum SEO</h1>
                  <div className="flex items-center gap-2 mt-1">
                    <span className="text-[10px] text-indigo-400 font-medium uppercase">Content Engine</span>
-                   <span className="text-[9px] text-slate-500 font-mono">v1.2.6</span>
+                   <span className="text-[9px] text-slate-500 font-mono">v1.2.8</span>
                  </div>
               </div>
             )}
