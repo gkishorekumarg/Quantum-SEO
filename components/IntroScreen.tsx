@@ -1,9 +1,4 @@
 import React, { useEffect, useRef, useState } from 'react';
-import * as THREE from 'this'; // Vite will handle this correctly from node_modules
-
-// Note: Using a standard import for THREE as Vite handles bundling.
-// If the above causes issues in your specific dev environment, 
-// ensure 'three' is installed in your package.json.
 import * as THREE_LIB from 'three';
 
 interface Props {
@@ -176,7 +171,7 @@ const IntroScreen: React.FC<Props> = ({ onStart }) => {
                 Powered by Gemini
             </div>
             <div className="text-slate-500 font-mono text-[9px]">
-                VERSION 1.2.5
+                VERSION 1.2.6
             </div>
         </div>
       </div>
